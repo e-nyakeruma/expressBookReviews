@@ -29,21 +29,46 @@ regd_users.post("/login", (req,res) => {
     const userFound = users.find((user) => user.username === username && user.password === password)
     if(userFound){
         const secretKey = "feekl0-jfwnfkenkfw-wefbwjefb"
-        jwt.sign()
+        jwt.sign(userFound.username, secretKey, {expiresIn: 60 * 60}, (error, token) => {
+            if(error){
+                res.send("Erro occurred")
+            }
 
-        return res.status(200).send(`${username} successfully`)
+            res.send(token)
+        })
+
+        return res.status(200).send(`${username} successfully logged in`)
     } else {
-        return res.status(300).json("User not found");
+        return res.status(300).send("User not found");
     }
   } else {
-    return res.status(300).json("Username or password is missing");
+    return res.status(300).send("Username or password is missing");
   }
 });
 
 // Add a book review
 regd_users.put("/auth/review/:isbn", (req, res) => {
   //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
+  const isbn = req.params.isbn
+  const review = req.query.review
+  const book = books[isbn]
+  const username = req.user
+  if(book){
+    if(review){
+        findReviewByUser = book.reviews.find((review) => review.username === username)
+        if(findReviewByUser){
+            findReviewByUser.content = review
+        } else {
+            book.review = {
+                username: username, content: review
+            }
+        }
+    } else {
+        return res.status(300).send("Review not found"); 
+    }
+  } else {
+    return res.status(404).send("Book not found");
+  }
 });
 
 module.exports.authenticated = regd_users;
