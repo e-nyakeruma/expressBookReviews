@@ -61,13 +61,34 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
   const username = req.user
   if(book){
     if(review){
-        findReviewByUser = book.reviews.find((review) => review.username === username)
-        if(findReviewByUser){
-            findReviewByUser.content = review
-        } else {
-            book.review = {
+        if (Object.keys(book.reviews).length == 0) {
+            console.log("Initial entry")
+            book.reviews = [{
                 username: username, content: review
+            }]
+
+            books[isbn] = book
+
+            console.log("Review added: ", books[isbn])
+
+            return res.status(200).send("Review added: " + JSON.stringify(books[isbn], null, 4)); 
+        } else {
+            userReview = book.reviews.find((review) => review.username === username)
+            if(userReview){
+                console.log("Update review by " + username)
+                userReview.content = review
+            } else {
+                console.log("Add a new review by " + username)
+                book.reviews.push({
+                    username: username, content: review
+                })
             }
+
+            books[isbn] = book
+
+            console.log("Review updated: ", books[isbn])
+
+            return res.status(200).send("Review updated: " + JSON.stringify(books[isbn], null, 4)); 
         }
     } else {
         return res.status(300).send("Review not found"); 
@@ -75,6 +96,34 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
   } else {
     return res.status(404).send("Book not found");
   }
+});
+
+// Delete a book review
+regd_users.delete("/auth/review/:isbn", (req, res) => {
+    //Write your code here
+    const isbn = req.params.isbn
+    const book = books[isbn]
+    const username = req.user
+    if(book){
+        if (Object.keys(book.reviews).length > 0) {
+            userReviews = book.reviews.filter((review) => review.username !== username)
+            if(userReviews){
+                console.log("Deleted reviews by " + username)
+                console.log(userReviews)
+                book.reviews = userReviews
+            } 
+
+            books[isbn] = book
+
+            console.log("Review deleted: ", books[isbn])
+
+            return res.status(200).send("Review deleted: " + JSON.stringify(books[isbn], null, 4)); 
+        } else {
+            return res.status(300).send("Reviews not found");
+        }
+    } else {
+      return res.status(404).send("Book not found");
+    }
 });
 
 module.exports.authenticated = regd_users;
