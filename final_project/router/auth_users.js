@@ -16,7 +16,13 @@ const isValid = (username)=>{ //returns boolean
 }
 
 const authenticatedUser = (username,password)=>{ //returns boolean
-//write code to check if username and password match the one we have in records.
+    //write code to check if username and password match the one we have in records.
+    const userFound = users.find((user) => user.username === username && user.password === password)
+    if(userFound){
+        return true
+    } else {
+        return false
+    }
 }
 
 //only registered users can login
@@ -26,16 +32,16 @@ regd_users.post("/login", (req,res) => {
   let password = req.body.password
 
   if(username && password){
-    const userFound = users.find((user) => user.username === username && user.password === password)
-    if(userFound){
-        const secretKey = "feekl0-jfwnfkenkfw-wefbwjefb"
-        jwt.sign(userFound.username, secretKey, {expiresIn: 60 * 60}, (error, token) => {
-            if(error){
-                res.send("Erro occurred")
-            }
+    const userAuthenticated = authenticatedUser(username, password)
+    if(userAuthenticated){
+        const secretKey = "access"
+        let accessToken = jwt.sign({data: password}, secretKey, {expiresIn: 3600})
+        
+        req.session.auth = {
+            accessToken, username
+        }
 
-            res.send(token)
-        })
+        console.log(req.session)
 
         return res.status(200).send(`${username} successfully logged in`)
     } else {
